@@ -1,10 +1,20 @@
-import { pool } from "@/db";
+import { Pool } from "pg";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
+  const poolUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL;
+  const cleanedUrl = poolUrl?.replace(/[?&]sslmode=[^&]+/gi, "");
+  const masked = poolUrl?.replace(/:[^:@]+@/, ":****@");
+  const cleanedMasked = cleanedUrl?.replace(/:[^:@]+@/, ":****@");
+  const info = { poolUrl: masked, cleanedUrl: cleanedMasked };
+
   try {
-    await pool.query(`
+    const testPool = new Pool({
+      connectionString: cleanedUrl,
+      ssl: { rejectUnauthorized: false },
+    });
+    await testPool.query(`
       CREATE TABLE IF NOT EXISTS projects (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
@@ -21,8 +31,9 @@ export async function GET() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `);
-    return Response.json({ success: true, message: "Table created" });
+    await testPool.end();
+    return Response.json({ success: true, message: "Table created", ...info });
   } catch (error) {
-    return Response.json({ success: false, error: String(error) }, { status: 500 });
+    return Response.json({ success: false, error: String(error), ...info }, { status: 500 });
   }
 }
