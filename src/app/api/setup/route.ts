@@ -4,8 +4,9 @@ import { Pool } from "pg";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const dbUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL;
-  const masked = dbUrl ? dbUrl.replace(/:[^:@]+@/, ":****@") : "not found";
+  const rawUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL;
+  const dbUrl = rawUrl?.replace(/[?&]sslmode=[^&]+/gi, "");
+  const masked = rawUrl ? rawUrl.replace(/:[^:@]+@/, ":****@") : "not found";
   try {
     const testPool = new Pool({
       connectionString: dbUrl,
