@@ -3,7 +3,7 @@ import { Pool } from "pg";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const poolUrl = process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL || process.env.DATABASE_URL;
+  const poolUrl = process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL;
   const cleanedUrl = poolUrl?.replace(/[?&]sslmode=[^&]+/gi, "");
   const masked = poolUrl?.replace(/:[^:@]+@/, ":****@");
   const cleanedMasked = cleanedUrl?.replace(/:[^:@]+@/, ":****@");
