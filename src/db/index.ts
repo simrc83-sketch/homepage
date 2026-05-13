@@ -7,21 +7,19 @@ if (!databaseUrl) {
   throw new Error("DATABASE_URL or POSTGRES_URL is required");
 }
 
+const connectionString = databaseUrl.replace(/[?&]sslmode=[^&]+/gi, "");
+
 const globalForDb = globalThis as typeof globalThis & {
   __arenaNextJsPostgresqlPool?: Pool;
 };
 
-function ensureSsl(url: string): string {
-  const hasSslMode = /sslmode=/i.test(url);
-  if (hasSslMode) return url;
-  const separator = url.includes("?") ? "&" : "?";
-  return `${url}${separator}sslmode=require`;
-}
-
 export const pool =
   globalForDb.__arenaNextJsPostgresqlPool ??
   new Pool({
-    connectionString: ensureSsl(databaseUrl),
+    connectionString,
+    ssl: {
+      rejectUnauthorized: false,
+    },
   });
 
 if (process.env.NODE_ENV !== "production") {
