@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const poolUrl = process.env.POSTGRES_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.DATABASE_URL;
-  const cleanedUrl = poolUrl?.replace(/[?&]sslmode=[^&]+/gi, "");
+  const cleanedUrl = poolUrl?.replace(/[?&]sslmode=[^&]+/gi, (m) => m.startsWith("?") ? "?" : "");
   const masked = poolUrl?.replace(/:[^:@]+@/, ":****@");
   const cleanedMasked = cleanedUrl?.replace(/:[^:@]+@/, ":****@");
   const info = { poolUrl: masked, cleanedUrl: cleanedMasked };
