@@ -1,11 +1,10 @@
-import { db } from "@/db";
-import { sql } from "drizzle-orm";
+import { pool } from "@/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await db.execute(sql`
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS projects (
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
