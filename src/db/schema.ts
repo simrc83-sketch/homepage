@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, boolean, timestamp, varchar } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, boolean, timestamp, varchar, jsonb } from "drizzle-orm/pg-core";
 
 export const projects = pgTable("projects", {
   id: serial("id").primaryKey(),
@@ -8,7 +8,7 @@ export const projects = pgTable("projects", {
   location: varchar("location", { length: 255 }),
   description: text("description"),
   coverImage: text("cover_image"),
-  images: text("images").array(),
+  images: jsonb("images").$type<string[]>().default([]),
   featured: boolean("featured").default(false),
   displayOrder: integer("display_order").default(0),
   published: boolean("published").default(true),

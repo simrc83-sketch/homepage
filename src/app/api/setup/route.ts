@@ -13,7 +13,7 @@ export async function GET() {
         location VARCHAR(255),
         description TEXT,
         cover_image TEXT,
-        images TEXT[],
+        images JSONB DEFAULT '[]'::jsonb,
         featured BOOLEAN DEFAULT FALSE,
         display_order INTEGER DEFAULT 0,
         published BOOLEAN DEFAULT TRUE,
