@@ -1,0 +1,238 @@
+@import "tailwindcss";
+
+:root {
+  --warm-white: #F8F5F0;
+  --warm-white-2: #F2EDE6;
+  --dark: #1A1814;
+  --mid: #6B6560;
+  --accent: #C8A96E;
+  --border: #E5DDD4;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--warm-white);
+  color: var(--dark);
+  font-family: 'Georgia', serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--warm-white);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+/* Cursor */
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.1s ease;
+}
+
+.cursor-ring {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9998;
+  transition: all 0.15s ease;
+}
+
+/* Horizontal scroll container */
+.h-scroll-container {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.h-scroll-container::-webkit-scrollbar {
+  display: none;
+}
+
+.h-scroll-item {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Text reveal animation */
+.text-reveal {
+  overflow: hidden;
+}
+
+/* Noise texture overlay */
+.noise::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
+/* Magnetic button */
+.magnetic-btn {
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* Project card hover */
+.project-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(26,24,20,0.6) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.project-card:hover::after {
+  opacity: 1;
+}
+
+/* Line animation */
+@keyframes lineGrow {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* Fade up */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.8s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Marquee */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.marquee-inner {
+  animation: marquee 20s linear infinite;
+  display: flex;
+  width: max-content;
+}
+
+.marquee-inner:hover {
+  animation-play-state: paused;
+}
+
+/* Image hover scale */
+.img-hover {
+  transition: transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.img-hover:hover {
+  transform: scale(1.05);
+}
+
+/* Staggered fade in */
+@keyframes staggerIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Blob */
+@keyframes blobFloat {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(20px, -15px) scale(1.03); }
+  66% { transform: translate(-10px, 10px) scale(0.97); }
+}
+
+.blob-animate {
+  animation: blobFloat 12s ease-in-out infinite;
+}
+
+/* Page transition */
+.page-enter {
+  animation: fadeUp 0.6s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+/* Split text hover */
+.split-char {
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.split-char:hover {
+  transform: translateY(-4px);
+  color: var(--accent);
+}
+
+/* Horizontal scroll hint pulse */
+@keyframes scrollHint {
+  0%, 100% { opacity: 0.4; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(6px); }
+}
+.scroll-hint {
+  animation: scrollHint 2s ease-in-out infinite;
+}
+
+/* Underline draw */
+.underline-draw {
+  position: relative;
+}
+.underline-draw::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width 0.4s ease;
+}
+.underline-draw:hover::after {
+  width: 100%;
+}
