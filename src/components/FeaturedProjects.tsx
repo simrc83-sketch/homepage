@@ -88,7 +88,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             >
               <p
                 className="text-white text-2xl font-light mb-1"
-                style={{ fontFamily: "'Cormorant Garamond', serif" }}
+                style={{ fontFamily: "'DM Sans', sans-serif" }}
               >
                 {project.title}
               </p>
@@ -117,7 +117,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           <div>
             <h3
               className="text-lg font-light text-[#1A1814] mb-1 transition-colors duration-300 group-hover:text-[#C8A96E]"
-              style={{ fontFamily: "'Cormorant Garamond', serif", letterSpacing: "0.02em" }}
+              style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "0.02em" }}
             >
               {project.title}
             </h3>
@@ -144,6 +144,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 export default function FeaturedProjects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     fetch("/api/projects")
@@ -151,7 +152,7 @@ export default function FeaturedProjects() {
       .then((data: Project[]) => {
         if (Array.isArray(data)) setProjects(data.slice(0, 5));
       })
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -173,9 +174,10 @@ export default function FeaturedProjects() {
     <section
       ref={sectionRef}
       id="featured-projects"
-      className="px-8 md:px-16 py-24 md:py-36"
+      className="px-8 md:px-16 py-20 md:py-32"
       style={{ backgroundColor: "var(--warm-white)" }}
     >
+      <div className="max-w-[1280px] mx-auto">
       {/* Section header */}
       <div
         className="flex justify-between items-end mb-16 md:mb-24"
@@ -188,18 +190,8 @@ export default function FeaturedProjects() {
             className="text-xs text-[#C8A96E] tracking-[0.4em] uppercase mb-3"
             style={{ fontFamily: "'DM Sans', sans-serif" }}
           >
-            Selected Work
-          </p>
-          <h2
-            className="font-light text-[#1A1814]"
-            style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: "clamp(36px, 5vw, 72px)",
-              letterSpacing: "-0.01em",
-            }}
-          >
             Featured Projects
-          </h2>
+          </p>
         </div>
         <Link
           href="/projects"
@@ -221,7 +213,7 @@ export default function FeaturedProjects() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {[...Array(3)].map((_, i) => (
             <div
               key={i}
@@ -232,6 +224,22 @@ export default function FeaturedProjects() {
               }}
             />
           ))}
+        </div>
+      ) : error ? (
+        <div className="py-32 text-center">
+          <p
+            className="text-[#6B6560] text-sm tracking-wide mb-4"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            Failed to load projects.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-xs tracking-[0.2em] uppercase text-[#C8A96E] border border-[#C8A96E] px-5 py-2.5 rounded-full hover:bg-[#C8A96E] hover:text-white transition-all duration-300"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            Retry
+          </button>
         </div>
       ) : projects.length === 0 ? (
         <div className="py-32 text-center">
@@ -247,7 +255,7 @@ export default function FeaturedProjects() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
           {projects.map((p, i) => (
             <ProjectCard key={p.id} project={p} index={i} />
           ))}
@@ -281,12 +289,13 @@ export default function FeaturedProjects() {
             </p>
             <p
               className="text-lg font-light text-[#1A1814]"
-              style={{ fontFamily: "'Cormorant Garamond', serif" }}
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
             >
               View Projects Page →
             </p>
           </div>
         </Link>
+      </div>
       </div>
     </section>
   );

@@ -1,11 +1,10 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
-const rawUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-const connectionString = rawUrl?.replace(/[?&]sslmode=[^&]+/gi, (m) => m.startsWith("?") ? "?" : "");
+const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
-  throw new Error("DATABASE_URL or POSTGRES_URL is required");
+  throw new Error("DATABASE_URL is required");
 }
 
 const globalForDb = globalThis as typeof globalThis & {
@@ -16,6 +15,8 @@ export const pool =
   globalForDb.__arenaNextJsPostgresqlPool ??
   new Pool({
     connectionString,
+    connectionTimeoutMillis: 10000,
+    max: 5,
     ssl: { rejectUnauthorized: false },
   });
 

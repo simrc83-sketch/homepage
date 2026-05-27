@@ -3,16 +3,9 @@ import { db } from "@/db";
 import { projects } from "@/db/schema";
 import { asc, eq } from "drizzle-orm";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(req.url);
-    const featuredOnly = searchParams.get("featured") === "true";
-
-    let query = db.select().from(projects).where(eq(projects.published, true));
-
-    const result = featuredOnly
-      ? await db.select().from(projects).where(eq(projects.featured, true)).orderBy(asc(projects.displayOrder))
-      : await db.select().from(projects).where(eq(projects.published, true)).orderBy(asc(projects.displayOrder));
+    const result = await db.select().from(projects).where(eq(projects.published, true)).orderBy(asc(projects.displayOrder));
 
     return NextResponse.json(result);
   } catch (error) {

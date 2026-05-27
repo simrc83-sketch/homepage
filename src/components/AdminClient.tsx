@@ -3,14 +3,14 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import type { Project } from "@/db/schema";
 
-const SPACE_TYPES = ["Residential", "Commercial", "Hospitality", "Office", "Other"];
+const SPACE_TYPES = ["상업공간", "주거공간", "오피스", "숙박공간", "전시/팝업스토어", "기타"];
 
 type EditingProject = Omit<Project, "id" | "createdAt" | "updatedAt"> & { id?: number };
 
 const emptyProject = (): EditingProject => ({
   title: "",
   year: new Date().getFullYear().toString(),
-  spaceType: "Residential",
+  spaceType: "상업공간",
   location: "",
   description: "",
   coverImage: "",
@@ -21,6 +21,20 @@ const emptyProject = (): EditingProject => ({
 });
 
 export default function AdminClient() {
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.assign("/admin/login");
+  };
+
+  const handleAuthError = (status: number) => {
+    if (status === 401) {
+      showToast("로그인이 만료되었습니다. 다시 로그인해주세요.", "error");
+      setTimeout(() => window.location.assign("/admin/login"), 1500);
+      return true;
+    }
+    return false;
+  };
+  const [tab, setTab] = useState("projects");
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<EditingProject | null>(null);
@@ -46,7 +60,7 @@ export default function AdminClient() {
       const data: Project[] = await res.json();
       if (Array.isArray(data)) setProjects(data);
     } catch {
-      showToast("Failed to load projects", "error");
+      showToast("프로젝트를 불러오지 못했습니다", "error");
     } finally {
       setLoading(false);
     }
@@ -56,8 +70,8 @@ export default function AdminClient() {
 
   const handleSave = async () => {
     if (!editing) return;
-    if (!editing.title.trim()) { showToast("Title is required", "error"); return; }
-    if (!editing.year.trim()) { showToast("Year is required", "error"); return; }
+    if (!editing.title.trim()) { showToast("프로젝트 제목을 입력해주세요", "error"); return; }
+    if (!editing.year.trim()) { showToast("연도를 입력해주세요", "error"); return; }
     setSaving(true);
     try {
       const method = editing.id ? "PUT" : "POST";
@@ -67,46 +81,52 @@ export default function AdminClient() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editing),
       });
-      if (!res.ok) throw new Error();
-      showToast(editing.id ? "Project updated!" : "Project created!");
+      if (!res.ok) {
+        if (handleAuthError(res.status)) return;
+        throw new Error();
+      }
+      showToast(editing.id ? "프로젝트가 수정되었습니다" : "프로젝트가 생성되었습니다");
       setEditing(null);
       fetchProjects();
     } catch {
-      showToast("Save failed", "error");
+      showToast("저장에 실패했습니다", "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this project?")) return;
+    if (!confirm("이 프로젝트를 삭제하시겠습니까?")) return;
     setDeleting(id);
     try {
-      await fetch(`/api/projects/${id}`, { method: "DELETE" });
-      showToast("Project deleted");
+      const delRes = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+      if (!delRes.ok) { handleAuthError(delRes.status); throw new Error(); }
+      showToast("프로젝트가 삭제되었습니다");
       fetchProjects();
     } catch {
-      showToast("Delete failed", "error");
+      showToast("삭제에 실패했습니다", "error");
     } finally {
       setDeleting(null);
     }
   };
 
   const handleTogglePublish = async (p: Project) => {
-    await fetch(`/api/projects/${p.id}`, {
+    const res = await fetch(`/api/projects/${p.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ published: !p.published }),
     });
+    if (!res.ok) { handleAuthError(res.status); return; }
     fetchProjects();
   };
 
   const handleToggleFeatured = async (p: Project) => {
-    await fetch(`/api/projects/${p.id}`, {
+    const res = await fetch(`/api/projects/${p.id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ featured: !p.featured }),
     });
+    if (!res.ok) { handleAuthError(res.status); return; }
     fetchProjects();
   };
 
@@ -116,11 +136,11 @@ export default function AdminClient() {
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json() as { url?: string };
+      const data = await res.json() as { url?: string; error?: string };
       if (data.url) onSuccess(data.url);
-      else showToast("Upload failed", "error");
+      else showToast(data.error || "업로드에 실패했습니다", "error");
     } catch {
-      showToast("Upload failed", "error");
+      showToast("업로드에 실패했습니다", "error");
     } finally {
       setUploading(false);
     }
@@ -166,7 +186,7 @@ export default function AdminClient() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ids: sorted.map((p) => p.id) }),
     });
-    showToast("Order saved!");
+    showToast("순서가 저장되었습니다");
   };
 
   const inputClass = "w-full bg-transparent border-b border-[#E5DDD4] py-2.5 px-0 text-sm text-[#1A1814] placeholder-[#C8C0B0] outline-none focus:border-[#C8A96E] transition-colors duration-300";
@@ -180,29 +200,54 @@ export default function AdminClient() {
           <div className="flex items-center gap-6">
             <a href="/" className="flex flex-col leading-none">
               <span className="text-[9px] tracking-[0.4em] uppercase text-[#6B6560]">Design</span>
-              <span className="text-base tracking-[0.2em] uppercase text-[#1A1814]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>NADEUL</span>
+              <span className="text-base tracking-[0.2em] uppercase text-[#1A1814]" style={{ fontFamily: "'DM Sans', sans-serif" }}>NADEUL</span>
             </a>
             <div className="w-px h-6 bg-[#E5DDD4]" />
-            <span className="text-xs tracking-[0.25em] uppercase text-[#6B6560]">Admin Panel</span>
+            <span className="text-xs tracking-[0.25em] uppercase text-[#6B6560]">관리자</span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-1 bg-[#F2EDE6] rounded-full p-1">
+              <button
+                onClick={() => setTab("projects")}
+                className="px-4 py-1.5 text-[10px] tracking-[0.2em] uppercase rounded-full transition-all duration-300"
+                style={{
+                  backgroundColor: tab === "projects" ? "#F8F5F0" : "transparent",
+                  color: tab === "projects" ? "#1A1814" : "#6B6560",
+                  boxShadow: tab === "projects" ? "0 1px 3px rgba(0,0,0,0.08)" : "none",
+                }}
+              >
+                프로젝트
+              </button>
+
+            </div>
             <a
               href="/"
               className="text-xs tracking-[0.2em] uppercase text-[#6B6560] hover:text-[#1A1814] transition-colors duration-300"
             >
-              ← View Site
+              ← 사이트 보기
             </a>
             <button
-              onClick={() => setEditing(emptyProject())}
-              className="flex items-center gap-2 px-4 py-2 rounded-full text-xs tracking-[0.2em] uppercase text-white transition-all duration-300 hover:opacity-80"
-              style={{ backgroundColor: "#1A1814" }}
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] tracking-[0.2em] uppercase text-[#6B6560] border border-[#E5DDD4] hover:border-[#C0392B] hover:text-[#C0392B] transition-all duration-300"
             >
               <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                <path d="M5 1v8M1 5h8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                <path d="M3.5 1.5h-2v7h2M6.5 3l2 2-2 2M3.5 5h5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              New Project
+              로그아웃
             </button>
+            {tab === "projects" && (
+              <button
+                onClick={() => setEditing(emptyProject())}
+                className="flex items-center gap-2 px-4 py-2 rounded-full text-xs tracking-[0.2em] uppercase text-white transition-all duration-300 hover:opacity-80"
+                style={{ backgroundColor: "#1A1814" }}
+              >
+                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                  <path d="M5 1v8M1 5h8" stroke="white" strokeWidth="1.5" strokeLinecap="round" />
+                </svg>
+                새 프로젝트
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -220,12 +265,12 @@ export default function AdminClient() {
       <div className="max-w-[1400px] mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-light text-[#1A1814]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-              Project Management
+            <h1 className="text-2xl font-light text-[#1A1814]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+              프로젝트 관리
             </h1>
-            <p className="text-xs text-[#6B6560] mt-0.5">Drag rows to reorder · Click to edit</p>
+            <p className="text-xs text-[#6B6560] mt-0.5">행을 드래그하여 순서 변경 · 클릭하여 수정</p>
           </div>
-          <span className="text-xs text-[#6B6560]">{projects.length} projects</span>
+          <span className="text-xs text-[#6B6560]">총 {projects.length}개 프로젝트</span>
         </div>
 
         {loading ? (
@@ -236,19 +281,19 @@ export default function AdminClient() {
           </div>
         ) : projects.length === 0 ? (
           <div className="py-24 text-center">
-            <p className="text-[#6B6560] text-sm mb-4">No projects yet.</p>
+            <p className="text-[#6B6560] text-sm mb-4">아직 프로젝트가 없습니다.</p>
             <button
               onClick={() => setEditing(emptyProject())}
               className="text-xs tracking-widest uppercase text-[#C8A96E] border border-[#C8A96E] px-6 py-3 rounded-full hover:bg-[#C8A96E] hover:text-white transition-all duration-300"
             >
-              Add First Project
+              첫 프로젝트 추가하기
             </button>
           </div>
         ) : (
           <>
             {/* Column Headers */}
             <div className="hidden md:grid grid-cols-[32px_1fr_80px_120px_90px_80px_80px_100px] gap-4 px-4 pb-2 mb-1">
-              {["#", "Project", "Year", "Type", "Status", "Featured", "Published", "Actions"].map((h) => (
+              {["#", "프로젝트", "연도", "유형", "순서", "추천", "공개", "관리"].map((h) => (
                 <span key={h} className="text-[10px] tracking-[0.25em] uppercase text-[#6B6560]">{h}</span>
               ))}
             </div>
@@ -316,7 +361,7 @@ export default function AdminClient() {
                     <svg width="12" height="12" viewBox="0 0 12 12" fill={p.featured ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.2">
                       <path d="M6 1l1.3 2.7 3 .4-2.2 2.1.5 3L6 7.8 3.4 9.2l.5-3L1.7 4.1l3-.4z" />
                     </svg>
-                    {p.featured ? "Yes" : "No"}
+                    {p.featured ? "예" : "아니오"}
                   </button>
 
                   {/* Published */}
@@ -373,9 +418,9 @@ export default function AdminClient() {
             <div className="sticky top-0 z-10 flex items-center justify-between px-8 py-6 border-b" style={{ backgroundColor: "#F8F5F0", borderColor: "#E5DDD4" }}>
               <div>
                 <p className="text-[10px] tracking-[0.4em] uppercase text-[#C8A96E]">
-                  {editing.id ? "Edit" : "New"} Project
+                  {editing.id ? "수정" : "새 프로젝트"}
                 </p>
-                <h2 className="text-xl font-light text-[#1A1814] mt-0.5" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                <h2 className="text-xl font-light text-[#1A1814] mt-0.5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
                   {editing.title || "Untitled"}
                 </h2>
               </div>
@@ -389,7 +434,7 @@ export default function AdminClient() {
             <div className="px-8 py-8 space-y-8">
               {/* Cover Image */}
               <div>
-                <label className={labelClass}>Cover Image</label>
+                <label className={labelClass}>커버 이미지</label>
                 <div
                   className="relative border-2 border-dashed rounded-xl overflow-hidden transition-all duration-300 cursor-pointer"
                   style={{
@@ -407,7 +452,7 @@ export default function AdminClient() {
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={editing.coverImage} alt="Cover" className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-white text-xs tracking-widest">Change Image</span>
+                          <span className="text-white text-xs tracking-widest">이미지 변경</span>
                       </div>
                     </>
                   ) : (
@@ -420,7 +465,8 @@ export default function AdminClient() {
                             <path d="M4 16l4-4 4 4 4-6 4 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                             <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5" />
                           </svg>
-                          <p className="text-xs text-[#C8C0B0]">Drag & drop or click to upload</p>
+                          <p className="text-xs text-[#C8C0B0]">드래그 앤 드롭 또는 클릭하여 업로드</p>
+                          <p className="text-[9px] text-[#C8C0B0] mt-1">JPG / PNG / WebP / GIF · 최대 10MB</p>
                         </>
                       )}
                     </div>
@@ -441,18 +487,18 @@ export default function AdminClient() {
                     className="mt-2 text-[10px] text-red-400 hover:text-red-500 tracking-widest uppercase"
                     onClick={() => setEditing((prev) => prev ? { ...prev, coverImage: "" } : prev)}
                   >
-                    Remove Cover
+                    커버 삭제
                   </button>
                 )}
               </div>
 
               {/* Title */}
               <div>
-                <label className={labelClass}>Project Title *</label>
+                <label className={labelClass}>프로젝트 제목 *</label>
                 <input
                   className={inputClass}
                   value={editing.title}
-                  placeholder="e.g. Hanam Residence"
+                  placeholder="예: 한남동 레지던스"
                   onChange={(e) => setEditing({ ...editing, title: e.target.value })}
                 />
               </div>
@@ -460,7 +506,7 @@ export default function AdminClient() {
               {/* Year + Space Type */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <label className={labelClass}>Year *</label>
+                  <label className={labelClass}>연도 *</label>
                   <input
                     className={inputClass}
                     value={editing.year}
@@ -469,7 +515,7 @@ export default function AdminClient() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Space Type *</label>
+                  <label className={labelClass}>공간 유형 *</label>
                   <select
                     className={inputClass}
                     value={editing.spaceType}
@@ -482,30 +528,30 @@ export default function AdminClient() {
 
               {/* Location */}
               <div>
-                <label className={labelClass}>Location</label>
+                <label className={labelClass}>위치</label>
                 <input
                   className={inputClass}
                   value={editing.location ?? ""}
-                  placeholder="e.g. Hanam-si, Gyeonggi-do"
+                  placeholder="예: 경기도 고양시"
                   onChange={(e) => setEditing({ ...editing, location: e.target.value })}
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className={labelClass}>Description</label>
+                <label className={labelClass}>설명</label>
                 <textarea
                   className={inputClass + " resize-none"}
                   rows={4}
                   value={editing.description ?? ""}
-                  placeholder="Project description..."
+                  placeholder="프로젝트 설명을 입력하세요..."
                   onChange={(e) => setEditing({ ...editing, description: e.target.value })}
                 />
               </div>
 
               {/* Additional Images */}
               <div>
-                <label className={labelClass}>Additional Images</label>
+                <label className={labelClass}>추가 이미지</label>
                 <div className="flex flex-wrap gap-3 mb-3">
                   {(editing.images ?? []).map((img, i) => (
                     <div key={i} className="relative w-20 h-20 rounded-lg overflow-hidden group">
@@ -540,12 +586,12 @@ export default function AdminClient() {
                   className="hidden"
                   onChange={(e) => handleImagesUpload(e.target.files)}
                 />
-                <p className="text-[10px] text-[#C8C0B0]">Click + to add more images</p>
+                <p className="text-[10px] text-[#C8C0B0]">+를 클릭하여 이미지 추가</p>
               </div>
 
               {/* Display Order */}
               <div>
-                <label className={labelClass}>Display Order</label>
+                <label className={labelClass}>표시 순서</label>
                 <input
                   type="number"
                   className={inputClass}
@@ -557,8 +603,8 @@ export default function AdminClient() {
               {/* Toggles */}
               <div className="flex items-center gap-8">
                 {[
-                  { label: "Featured", key: "featured" as const },
-                  { label: "Published", key: "published" as const },
+                  { label: "추천", key: "featured" as const },
+                  { label: "공개", key: "published" as const },
                 ].map(({ label, key }) => (
                   <div key={key} className="flex items-center gap-3">
                     <button
@@ -591,7 +637,7 @@ export default function AdminClient() {
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
                         <path d="M1 5l3 3 5-6" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
-                      Save Project
+                      저장
                     </>
                   )}
                 </button>
@@ -599,7 +645,7 @@ export default function AdminClient() {
                   onClick={() => setEditing(null)}
                   className="px-6 py-3 rounded-full text-xs tracking-[0.2em] uppercase text-[#6B6560] border border-[#E5DDD4] hover:border-[#1A1814] hover:text-[#1A1814] transition-all duration-300"
                 >
-                  Cancel
+                  취소
                 </button>
               </div>
             </div>

@@ -7,6 +7,7 @@ export default function CustomCursor() {
   const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (typeof window !== "undefined" && !window.matchMedia("(pointer: fine)").matches) return;
     const dot = dotRef.current;
     const ring = ringRef.current;
     if (!dot || !ring) return;
@@ -51,20 +52,19 @@ export default function CustomCursor() {
     document.addEventListener("mousemove", onMove);
     animId = requestAnimationFrame(animate);
 
-    const links = document.querySelectorAll("a, button, [data-cursor]");
-    links.forEach((el) => {
+    const initLink = (el: Element) => {
+      if (el.getAttribute("data-cursor-initialized") !== null) return;
+      el.setAttribute("data-cursor-initialized", "");
       el.addEventListener("mouseenter", onEnterLink);
       el.addEventListener("mouseleave", onLeaveLink);
-    });
+    };
+
+    document.querySelectorAll("a, button, [data-cursor]").forEach(initLink);
 
     const observer = new MutationObserver(() => {
-      const newLinks = document.querySelectorAll("a, button, [data-cursor]");
-      newLinks.forEach((el) => {
-        el.removeEventListener("mouseenter", onEnterLink);
-        el.removeEventListener("mouseleave", onLeaveLink);
-        el.addEventListener("mouseenter", onEnterLink);
-        el.addEventListener("mouseleave", onLeaveLink);
-      });
+      document
+        .querySelectorAll("a, button, [data-cursor]:not([data-cursor-initialized])")
+        .forEach(initLink);
     });
     observer.observe(document.body, { childList: true, subtree: true });
 

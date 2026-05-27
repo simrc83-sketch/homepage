@@ -8,7 +8,7 @@ const PLACEHOLDER_COLORS = [
   "#CCC5BB", "#D8D0C5", "#E0D9D0", "#CAC2B8", "#D6CEC4",
 ];
 
-const SPACE_TYPES = ["All", "Residential", "Commercial", "Hospitality", "Office"];
+const SPACE_TYPES = ["All", "상업공간", "주거공간", "오피스", "숙박공간", "전시/팝업스토어", "기타"];
 
 // ——— Vertical Grid Item ———
 function GridProjectItem({
@@ -109,7 +109,7 @@ function GridProjectItem({
           <h3
             className="text-base font-light text-[#1A1814] transition-colors duration-300"
             style={{
-              fontFamily: "'Cormorant Garamond', serif",
+              fontFamily: "'DM Sans', sans-serif",
               color: hovered ? "#C8A96E" : "#1A1814",
             }}
           >
@@ -188,7 +188,7 @@ function HScrollCard({
           }}
         >
           <div>
-            <p className="text-white text-xl font-light mb-1" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+            <p className="text-white text-xl font-light mb-1" style={{ fontFamily: "'DM Sans', sans-serif" }}>
               {project.title}
             </p>
             <p className="text-white/60 text-[10px] tracking-widest uppercase" style={{ fontFamily: "'DM Sans', sans-serif" }}>
@@ -203,7 +203,7 @@ function HScrollCard({
             <p
               className="text-sm font-light transition-colors duration-300"
               style={{
-                fontFamily: "'Cormorant Garamond', serif",
+                fontFamily: "'DM Sans', sans-serif",
                 color: hovered ? "#C8A96E" : "#1A1814",
               }}
             >
@@ -233,6 +233,8 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight") setCurrentImg((i) => Math.min(i + 1, allImages.length - 1));
+      if (e.key === "ArrowLeft") setCurrentImg((i) => Math.max(i - 1, 0));
     };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -240,7 +242,7 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [onClose]);
+  }, [onClose, allImages.length]);
 
   return (
     <div
@@ -267,7 +269,7 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
         </button>
 
         {/* Image */}
-        <div className="relative" style={{ height: "55vh", backgroundColor: "#DDD5C8" }}>
+        <div className="relative" style={{ minHeight: "300px", maxHeight: "55vh", height: "55vh", backgroundColor: "#DDD5C8" }}>
           {allImages.length > 0 ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -311,7 +313,7 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
           </p>
           <h2
             className="font-light text-[#1A1814] mb-2"
-            style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "36px", lineHeight: 1.1 }}
+            style={{ fontFamily: "'DM Sans', sans-serif", fontSize: "36px", lineHeight: 1.1 }}
           >
             {project.title}
           </h2>
@@ -364,6 +366,7 @@ function ProjectModal({ project, onClose }: { project: Project; onClose: () => v
 export default function ProjectsClient() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [filter, setFilter] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -376,7 +379,7 @@ export default function ProjectsClient() {
     fetch("/api/projects")
       .then((r) => r.json())
       .then((data: Project[]) => { if (Array.isArray(data)) setProjects(data); })
-      .catch(() => {})
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -431,7 +434,7 @@ export default function ProjectsClient() {
               <h1
                 className="font-light text-[#1A1814]"
                 style={{
-                  fontFamily: "'Cormorant Garamond', serif",
+                  fontFamily: "'DM Sans', sans-serif",
                   fontSize: "clamp(40px, 6vw, 96px)",
                   lineHeight: 1,
                   letterSpacing: "-0.01em",
@@ -484,6 +487,19 @@ export default function ProjectsClient() {
           {[...Array(8)].map((_, i) => (
             <div key={i} className="animate-pulse rounded" style={{ height: "260px", backgroundColor: "var(--border)" }} />
           ))}
+        </div>
+      ) : error ? (
+        <div className="py-32 text-center">
+          <p className="text-[#6B6560] text-sm mb-4" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            Failed to load projects.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-xs tracking-[0.2em] uppercase text-[#C8A96E] border border-[#C8A96E] px-5 py-2.5 rounded-full hover:bg-[#C8A96E] hover:text-white transition-all duration-300"
+            style={{ fontFamily: "'DM Sans', sans-serif" }}
+          >
+            Retry
+          </button>
         </div>
       ) : filteredProjects.length === 0 ? (
         <div className="py-32 text-center">
@@ -595,7 +611,7 @@ export default function ProjectsClient() {
                         <p className="text-xs tracking-[0.3em] uppercase text-[#C8A96E] mb-2" style={{ fontFamily: "'DM Sans', sans-serif" }}>
                           That's all
                         </p>
-                        <p className="text-2xl font-light text-[#1A1814]" style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+                        <p className="text-2xl font-light text-[#1A1814]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
                           Get in Touch
                         </p>
                         <p className="text-xs text-[#6B6560] mt-2" style={{ fontFamily: "'DM Sans', sans-serif" }}>

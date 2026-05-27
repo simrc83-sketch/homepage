@@ -25,24 +25,24 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+        className={`fixed top-0 left-0 right-0 z-50 px-8 md:px-16 transition-all duration-500 ${
           scrolled
             ? "bg-[#F8F5F0]/90 backdrop-blur-md border-b border-[#E5DDD4]"
             : "bg-transparent"
         }`}
       >
-        <div className="max-w-[1600px] mx-auto px-8 md:px-16 h-16 md:h-20 flex items-center justify-between">
+        <div className="max-w-[1280px] mx-auto h-12 md:h-16 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/" className="flex flex-col leading-none group">
+          <Link href="/" className="flex items-baseline gap-1 leading-none group">
             <span
-              className="text-xs tracking-[0.3em] uppercase text-[#6B6560] transition-all duration-300 group-hover:text-[#C8A96E]"
+              className="text-sm tracking-[0.12em] uppercase text-[#6B6560] transition-all duration-300 group-hover:text-[#C8A96E]"
               style={{ fontFamily: "'DM Sans', sans-serif" }}
             >
               Design
             </span>
             <span
-              className="text-xl font-light tracking-[0.2em] uppercase text-[#1A1814]"
-              style={{ fontFamily: "'Cormorant Garamond', serif", letterSpacing: "0.25em" }}
+              className="text-sm tracking-[0.12em] uppercase text-[#1A1814]"
+              style={{ fontFamily: "'DM Sans', sans-serif" }}
             >
               NADEUL
             </span>
@@ -103,9 +103,11 @@ export default function Navbar() {
               key={link.href}
               href={link.href}
               onClick={() => setMenuOpen(false)}
-              className="text-4xl font-light text-[#1A1814] tracking-wide"
+              className={`text-4xl font-light tracking-wide ${
+                pathname === link.href ? "text-[#C8A96E]" : "text-[#1A1814]"
+              }`}
               style={{
-                fontFamily: "'Cormorant Garamond', serif",
+                fontFamily: "'DM Sans', sans-serif",
                 transitionDelay: `${i * 60}ms`,
                 opacity: menuOpen ? 1 : 0,
                 transform: menuOpen ? "translateY(0)" : "translateY(20px)",
